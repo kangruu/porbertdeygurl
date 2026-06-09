@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>February to June</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Lora', serif;
+      color: #f0e6d3;
+      background: #0b0b1a;
+      overflow-x: hidden;
+      line-height: 1.8;
+    }
+    ::selection { background: rgba(255, 200, 150, 0.3); }
+    #bg-gradient {
+      position: fixed; inset: 0; z-index: -2;
+      background: #0b0b1a;
+    }
+    #stars-container {
+      position: fixed; inset: 0; z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: #fff;
+      animation: twinkle var(--dur) ease-in-out infinite alternate;
+      transition: opacity 0.8s ease;
+    }
+    @keyframes twinkle {
+      0% { opacity: var(--min-op, 0.3); transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1.2); }
+    }
+    #particles-canvas {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+    }
+    section {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+    .section-content {
+      max-width: 680px;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .section-content.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .month-number {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 0.85rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: rgba(240, 230, 211, 0.5);
+      margin-bottom: 1.5rem;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
+      font-style: italic;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      color: #f0e6d3;
+      margin-bottom: 2rem;
+    }
+    .section-text {
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
+      color: rgba(240, 230, 211, 0.85);
+      line-height: 1.9;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .section-text p {
+      margin-bottom: 1.2rem;
+    }
+    .section-divider {
+      width: 40px; height: 1px;
+      background: rgba(240, 230, 211, 0.3);
+      margin: 2rem auto;
+    }
+    .section-text p {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      transition-delay: calc(var(--i, 0) * 0.12s);
+    }
+    .section-text.reveal p {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #progress-bar {
+      position: fixed; top: 0; left: 0; z-index: 60;
+      width: 0; height: 1px;
+      background: rgba(240, 230, 211, 0.3);
+      transition: width 0.1s linear;
+    }
+    #nav-dots {
+      position: fixed; right: 1.5rem; top: 50%; z-index: 40;
+      transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 0.7rem;
+    }
+    .nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(240, 230, 211, 0.2);
+      border: 1px solid rgba(240, 230, 211, 0.15);
+      cursor: pointer;
+      transition: all 0.4s ease;
+    }
+    .nav-dot:hover {
+      background: rgba(240, 230, 211, 0.4);
+      transform: scale(1.3);
+    }
+    .nav-dot.active {
+      background: rgba(240, 230, 211, 0.6);
+      border-color: rgba(240, 230, 211, 0.4);
+      transform: scale(1.3);
+    }
+    #back-to-top {
+      position: fixed; bottom: 2rem; left: 2rem; z-index: 50;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1px solid rgba(240, 230, 211, 0.2);
+      background: rgba(11, 11, 26, 0.5);
+      backdrop-filter: blur(6px);
+      color: rgba(240, 230, 211, 0.6);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: all 0.4s ease;
+    }
+    #back-to-top.visible {
+      opacity: 1; pointer-events: auto;
+    }
+    #back-to-top:hover {
+      border-color: rgba(240, 230, 211, 0.5);
+      color: #f0e6d3;
+      background: rgba(11, 11, 26, 0.8);
+    }
+    #epilogue {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .letter-container {
+      perspective: 800px;
+    }
+    .letter {
+      background: linear-gradient(145deg, rgba(28, 25, 38, 0.92), rgba(22, 20, 32, 0.95));
+      border: 1px solid rgba(240, 230, 211, 0.12);
+      border-radius: 3px;
+      padding: 2.5rem 2.8rem;
+      max-width: 540px;
+      width: 100%;
+      position: relative;
+      backdrop-filter: blur(2px);
+      animation: floatLetter 6s ease-in-out infinite;
+      box-shadow:
+        0 8px 40px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(240, 230, 211, 0.06);
+    }
+    .letter::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(240, 230, 211, 0.15), transparent);
+    }
+    .letter p {
+      font-family: 'Lora', serif;
+      font-size: clamp(1rem, 2.5vw, 1.1rem);
+      line-height: 1.9;
+      color: rgba(240, 230, 211, 0.85);
+      margin-bottom: 1rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+      transition-delay: calc(var(--i, 0) * 0.18s);
+    }
+    .letter.reveal p {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .letter .letter-signature {
+      margin-top: 2rem;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: rgba(240, 230, 211, 0.6);
+    }
+    .letter .letter-end {
+      margin-top: 2.5rem;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: rgba(240, 230, 211, 0.25);
+      opacity: 0;
+      transition: opacity 1.5s ease 0.5s;
+    }
+    .letter.reveal .letter-end {
+      opacity: 1;
+    }
+    @keyframes floatLetter {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      25% { transform: translateY(-6px) rotate(0.3deg); }
+      50% { transform: translateY(0px) rotate(-0.2deg); }
+      75% { transform: translateY(-4px) rotate(0.2deg); }
+    }
+    #timeline {
+      position: fixed; left: 1.5rem; top: 0; bottom: 0; z-index: 3;
+      pointer-events: none;
+      width: 20px;
+    }
+    #timeline-line {
+      position: absolute; left: 9px; top: 8vh; bottom: 8vh;
+      width: 1px;
+      background: rgba(240, 230, 211, 0.06);
+    }
+    #timeline-progress {
+      position: absolute; top: 0; left: 0;
+      width: 1px;
+      background: rgba(240, 230, 211, 0.15);
+      transition: height 0.1s linear;
+    }
+    .timeline-dot {
+      position: absolute;
+      left: -3px;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(240, 230, 211, 0.08);
+      border: 1px solid rgba(240, 230, 211, 0.08);
+      transition: all 0.4s ease;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .timeline-dot.active {
+      background: rgba(240, 230, 211, 0.35);
+      border-color: rgba(240, 230, 211, 0.25);
+    }
+    .timeline-dot span {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 0.55rem;
+      letter-spacing: 1px;
+      color: rgba(240, 230, 211, 0.15);
+      transition: color 0.4s ease;
+      white-space: nowrap;
+    }
+    .timeline-dot.active span {
+      color: rgba(240, 230, 211, 0.4);
+    }
+    #constellation-canvas {
+      position: fixed; inset: 0; z-index: -1;
+      pointer-events: none;
+    }
+    #shootingstar-canvas {
+      position: fixed; inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+    #music-toggle {
+      position: fixed;
+      bottom: 2rem; right: 2rem;
+      z-index: 50;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(240, 230, 211, 0.3);
+      background: rgba(11, 11, 26, 0.6);
+      backdrop-filter: blur(8px);
+      color: #f0e6d3;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+    #music-toggle:hover {
+      border-color: rgba(240, 230, 211, 0.6);
+      background: rgba(11, 11, 26, 0.8);
+    }
+    #loading {
+      position: fixed; inset: 0; z-index: 200;
+      background: #0b0b1a;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 1.5s ease;
+    }
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #loading span {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: rgba(240, 230, 211, 0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    #back-link {
+      position: fixed;
+      top: 1.5rem; left: 1.5rem;
+      z-index: 50;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(240, 230, 211, 0.3);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border: 1px solid rgba(240, 230, 211, 0.15);
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+    #back-link:hover {
+      color: rgba(240, 230, 211, 0.6);
+      border-color: rgba(240, 230, 211, 0.3);
+    }
+    @media (max-width: 600px) {
+      section { padding: 3rem 1.5rem; }
+      #music-toggle { bottom: 1.2rem; right: 1.2rem; width: 40px; height: 40px; font-size: 1rem; }
+      #back-link { top: 1rem; left: 1rem; font-size: 0.6rem; padding: 0.4rem 0.8rem; }
+      .section-text { font-size: 1rem; }
+      #nav-dots { right: 0.8rem; gap: 0.5rem; }
+      .nav-dot { width: 6px; height: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading">
+    <span>&#10022; February to June &#10022;</span>
+  </div>
+
+  <div id="progress-bar"></div>
+  <div id="bg-gradient"></div>
+  <div id="stars-container"></div>
+  <canvas id="particles-canvas"></canvas>
+
+  <a id="back-link" href="index.html">&#8592; Back</a>
+  <button id="music-toggle" aria-label="Toggle music">&#9835;</button>
+
+  <section id="february">
+    <div class="section-content">
+      <div class="month-number">01</div>
+      <h2 class="section-title">February &mdash; The Goodbye</h2>
+      <div class="section-divider"></div>
+      <div class="section-text">
+        <p>February was the month everything became quiet.</p>
+        <p>For a while, I kept looking back at conversations, wondering if there was something I missed, something I could have said differently.</p>
+        <p>But some endings are not meant to be solved.<br>They are meant to be accepted.</p>
+        <p>At first, I thought the hardest part was losing you.<br>Later, I realized the harder part was being given another chance and not knowing if taking it would heal what was broken or simply reopen old wounds.</p>
+        <p>There was a time when I wanted nothing more than for us to find our way back to each other.<br>And when that possibility finally appeared, I found myself carrying memories I had never truly learned how to put down.</p>
+        <p>I still cared.<br>I still wanted you.<br>But love alone could not erase the hurt we had both experienced.</p>
+        <p>So in the end, I made a choice that broke my own heart.</p>
+        <p>Not because I stopped loving you, but because I was afraid that if we tried again before we had truly healed, we would only relive the same pain and lose each other all over again.</p>
+        <p>And so February became the month I learned that sometimes letting go is not the absence of love.</p>
+        <p>Sometimes, it is love taking a different form.</p>
+        <p>The kind that chooses someone's peace even when it means living with their absence.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="march">
+    <div class="section-content">
+      <div class="month-number">02</div>
+      <h2 class="section-title">March &mdash; Learning to Carry the Silence</h2>
+      <div class="section-divider"></div>
+      <div class="section-text">
+        <p>March felt strange.</p>
+        <p>The habit of sharing stories, random thoughts, and little moments was still there.</p>
+        <p>Many times I wanted to send a message.<br>Many times I stopped myself.</p>
+        <p>Not because I stopped caring,<br>but because I was learning that care can exist without interruption.</p>
+        <p>I learned that not every feeling needs to be delivered.<br>Some are simply carried.</p>
+        <p>There were moments when something good happened and you were the first person I thought of telling.<br>There were moments when life felt heavy, and I found myself looking for a conversation that no longer belonged to my days.</p>
+        <p>The absence was noticeable.<br>Not loud enough to stop life from moving forward, but quiet enough to be felt.</p>
+        <p>Some days I wondered how you were doing.<br>Whether you were happy.<br>Whether the things you hoped for were slowly finding their way to you.</p>
+        <p>I never stopped caring.</p>
+        <p>I just stopped reaching.</p>
+        <p>And somewhere between wanting to message you and choosing not to, I began to understand that missing someone and respecting the distance they need can exist at the same time.</p>
+        <p>March was not the month I moved on.</p>
+        <p>It was the month I learned how to carry your absence without trying to fill it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="april">
+    <div class="section-content">
+      <div class="month-number">03</div>
+      <h2 class="section-title">April &mdash; Becoming</h2>
+      <div class="section-divider"></div>
+      <div class="section-text">
+        <p>April was not about forgetting.</p>
+        <p>It was about becoming.</p>
+        <p>Little by little I returned to my studies, my goals, and the version of myself that still had dreams waiting to be pursued.</p>
+        <p>There were still moments when memories appeared unexpectedly.</p>
+        <p>But they no longer felt like wounds.</p>
+        <p>They felt like reminders that something beautiful once existed.</p>
+        <p>Still, I missed you.</p>
+        <p>Not every day in the same way, and not with the same heaviness as before, but in the quiet moments between everything else.</p>
+        <p>Sometimes a song, a thought, or a simple moment would bring you back to mind.</p>
+        <p>And for a while, I would find myself smiling at a memory before continuing with my day.</p>
+        <p>I learned that healing and missing someone can exist together.</p>
+        <p>That moving forward does not always mean leaving everything behind.</p>
+        <p>Some people remain part of us long after they are gone.</p>
+        <p>April was not the month I forgot you.</p>
+        <p>It was the month I learned how to grow while carrying the memories with me.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="may">
+    <div class="section-content">
+      <div class="month-number">04</div>
+      <h2 class="section-title">May &mdash; Gratitude</h2>
+      <div class="section-divider"></div>
+      <div class="section-text">
+        <p>By May, I found myself smiling at memories instead of running from them.</p>
+        <p>Not every story lasts forever.</p>
+        <p>But that does not make it meaningless.</p>
+        <p>You taught me things I would never have learned alone.</p>
+        <p>Patience.<br>Understanding.<br>Courage.</p>
+        <p>And for that, I will always be grateful.</p>
+        <p>For a long time, I thought the value of a story was measured by how long it lasted.</p>
+        <p>Now I think differently.</p>
+        <p>Some people stay for years and leave little behind.<br>Others become part of your life for a moment and change the way you see the world forever.</p>
+        <p>You were one of those people for me.</p>
+        <p>The memories no longer felt heavy.<br>They felt warm.</p>
+        <p>Like opening an old book and finding pages that still make you smile.</p>
+        <p>Of course, there were moments when I still missed you.</p>
+        <p>But by then, the feeling had changed.</p>
+        <p>It was no longer about wishing things had been different.</p>
+        <p>It was about being thankful that they happened at all.</p>
+        <p>May became the month I stopped asking why things ended and started appreciating that they happened.</p>
+        <p>And for the first time in a long while, I found peace in that.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="june">
+    <div class="section-content">
+      <div class="month-number">05</div>
+      <h2 class="section-title">June &mdash; Looking Forward</h2>
+      <div class="section-divider"></div>
+      <div class="section-text">
+        <p>Maybe someday, it could still be us.</p>
+        <p>I still find myself hoping for that, in a quiet way I don't always say out loud.</p>
+        <p>But right now, I don't think I can give you what you truly deserve in life.</p>
+        <p>Not because I don't care.</p>
+        <p>But because I still want to grow more as a person, to build myself into someone more stable, more ready, and more certain of who I am.</p>
+        <p>And I want the same for you too.</p>
+        <p>I want you to achieve the life you've been dreaming of, without being held back or limited by me in my current state.</p>
+        <p>So for now, I think it's better that we both focus on our own paths.</p>
+        <p>On becoming better.</p>
+        <p>On reaching the goals we truly want for ourselves.</p>
+        <p>I don't want us to love each other in a way that stops us from growing.</p>
+        <p>I want us to become the kind of people who are strong on our own, not because we don't care, but because we respect what we are trying to build.</p>
+        <p>If life ever brings us back together, I want it to be when we are both ready—not when we are still figuring out how to hold ourselves together.</p>
+        <p>And if it doesn't bring us back, I still want you to know that I will always be grateful for you.</p>
+        <p>For what we had.</p>
+        <p>For what we learned.</p>
+        <p>For the version of me that existed because you were part of my life.</p>
+        <p>So I will let you go for now, not as something forgotten, but as something I respect enough to release.</p>
+        <p>And maybe someday, when the timing is right and we've both grown into the lives we're working toward… it could still be us.</p>
+        <p>But for now, I'll quietly root for your happiness from where I am.</p>
+        <p>June feels different.</p>
+        <p>Not because everything has healed.</p>
+        <p>But because I have finally stopped measuring my days by what was lost.</p>
+        <p>Life keeps moving.<br>Dreams keep growing.</p>
+        <p>And while part of me still wonders about "us," I've learned that timing matters just as much as feeling.</p>
+        <p>Maybe I wanted to go back.</p>
+        <p>Maybe I still do, in some quiet parts of me.</p>
+        <p>But I also know that going back without being fully ready would only risk repeating the same things we once tried to move past.</p>
+        <p>So instead of holding on to what could have been, I choose to focus on what I need to become.</p>
+        <p>I want my self, and maybe your self too, to be more focused on our goals in life.</p>
+        <p>On what we truly want to achieve for ourselves right now.</p>
+        <p>Not out of distance or forgetting, but out of respect for the lives we are still building.</p>
+        <p>And if someday our paths meet again in a better time, I hope we can look at each other not as people trying to fix the past, but as people who grew through it.</p>
+        <p>But if not, I will still be grateful that you were part of my story.</p>
+        <p>Because even if we don't end up as "us," you will always be part of the reason I learned how to grow.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="epilogue">
+    <div class="letter-container">
+      <div class="letter" id="letter">
+        <p>Some people stay forever.</p>
+        <p>Some become beautiful memories.</p>
+        <p>Both are gifts.</p>
+        <p class="letter-signature">— A letter I never sent,<br>but always meant to write.</p>
+        <div class="letter-end">&mdash; The End &mdash;</div>
+      </div>
+    </div>
+  </section>
+
+  <canvas id="shootingstar-canvas"></canvas>
+
+  <div id="timeline">
+    <div id="timeline-line">
+      <div id="timeline-progress"></div>
+      <div class="timeline-dot" data-section="february" style="top:10%"><span>Feb</span></div>
+      <div class="timeline-dot" data-section="march" style="top:28%"><span>Mar</span></div>
+      <div class="timeline-dot" data-section="april" style="top:46%"><span>Apr</span></div>
+      <div class="timeline-dot" data-section="may" style="top:64%"><span>May</span></div>
+      <div class="timeline-dot" data-section="june" style="top:82%"><span>Jun</span></div>
+    </div>
+  </div>
+
+  <canvas id="constellation-canvas"></canvas>
+
+  <nav id="nav-dots">
+    <div class="nav-dot active" data-section="february"></div>
+    <div class="nav-dot" data-section="march"></div>
+    <div class="nav-dot" data-section="april"></div>
+    <div class="nav-dot" data-section="may"></div>
+    <div class="nav-dot" data-section="june"></div>
+  </nav>
+
+  <button id="back-to-top" aria-label="Back to top">&#8593;</button>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+        setTimeout(() => {
+          document.getElementById('loading').style.display = 'none';
+        }, 1500);
+      }, 1200);
+    });
+
+    const starsContainer = document.getElementById('stars-container');
+    const STAR_COUNT = 180;
+    const stars = [];
+    const starColors = ['#fff', '#fde8d0', '#d0e4fd', '#fdd0e0', '#fffde0', '#e0fde8'];
+    for (let i = 0; i < STAR_COUNT; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      const size = Math.random() * 2.5 + 0.5;
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
+      const minOp = Math.random() * 0.3 + 0.1;
+      const dur = Math.random() * 3 + 2;
+      const color = starColors[Math.floor(Math.random() * starColors.length)];
+      const glow = size > 2 ? `box-shadow: 0 0 ${size * 2}px ${color};` : '';
+      star.style.cssText = `
+        width: ${size}px; height: ${size}px;
+        left: ${x}%; top: ${y}%;
+        --min-op: ${minOp};
+        --dur: ${dur}s;
+        opacity: ${minOp};
+        background: ${color};
+        ${glow}
+      `;
+      starsContainer.appendChild(star);
+      stars.push({ el: star, baseY: y, baseOpacity: minOp + 0.3 });
+    }
+
+    function getScrollProgress() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      return docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+    }
+
+    function updateStars() {
+      const progress = getScrollProgress();
+      stars.forEach(star => {
+        const fadeFactor = Math.max(0, 1 - (progress / 0.65));
+        const baseOp = star.baseOpacity;
+        star.el.style.opacity = baseOp * fadeFactor;
+      });
+    }
+
+    const sectionContents = document.querySelectorAll('.section-content');
+
+    function checkVisibility() {
+      sectionContents.forEach(content => {
+        const rect = content.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const isVisible = rect.top < windowHeight * 0.85 && rect.bottom > 0;
+        content.classList.toggle('visible', isVisible);
+        const textBlock = content.querySelector('.section-text');
+        if (textBlock) {
+          const isCentered = rect.top < windowHeight * 0.55 && rect.bottom > windowHeight * 0.2;
+          textBlock.classList.toggle('reveal', isCentered);
+        }
+      });
+    }
+
+    const pCanvas = document.getElementById('particles-canvas');
+    const pCtx = pCanvas.getContext('2d');
+    let particleWidth, particleHeight;
+    const particles = [];
+    const PARTICLE_COUNT = 50;
+
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * particleWidth;
+        this.y = Math.random() * particleHeight;
+        this.size = Math.random() * 2.5 + 0.5;
+        this.speedY = -(Math.random() * 0.3 + 0.1);
+        this.speedX = (Math.random() - 0.5) * 0.1;
+        this.opacity = Math.random() * 0.4 + 0.1;
+        this.life = Math.random() * 200 + 100;
+      }
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        this.life--;
+        if (this.y < -10 || this.life <= 0) { this.reset(); this.y = particleHeight + 5; }
+      }
+      draw(ctx) {
+        const progress = getScrollProgress();
+        const fade = Math.max(0, 1 - (progress / 0.8));
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 230, 210, ${this.opacity * fade})`;
+        ctx.fill();
+      }
+    }
+
+    function resizeParticleCanvas() {
+      particleWidth = window.innerWidth;
+      particleHeight = window.innerHeight;
+      pCanvas.width = particleWidth;
+      pCanvas.height = particleHeight;
+    }
+
+    function initParticles() {
+      resizeParticleCanvas();
+      particles.length = 0;
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const p = new Particle();
+        particles.push(p);
+      }
+    }
+
+    function animateParticles() {
+      pCtx.clearRect(0, 0, particleWidth, particleHeight);
+      particles.forEach(p => { p.update(); p.draw(pCtx); });
+      requestAnimationFrame(animateParticles);
+    }
+
+    let ticking = false;
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          updateStars();
+          checkVisibility();
+          updateProgressBar();
+          updateNavDots();
+          updateBackToTop();
+          updateTimeline();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    const progressBar = document.getElementById('progress-bar');
+    function updateProgressBar() {
+      const progress = getScrollProgress();
+      progressBar.style.width = `${progress * 100}%`;
+    }
+
+    const navDots = document.querySelectorAll('.nav-dot');
+    const sectionIds = ['february', 'march', 'april', 'may', 'june'];
+
+    function updateNavDots() {
+      let current = 'june';
+      sectionIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= window.innerHeight * 0.5) current = id;
+        }
+      });
+      navDots.forEach(dot => {
+        dot.classList.toggle('active', dot.dataset.section === current);
+      });
+    }
+
+    navDots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const target = document.getElementById(dot.dataset.section);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    const timelineProgress = document.getElementById('timeline-progress');
+    const timelineDots = document.querySelectorAll('.timeline-dot');
+
+    function updateTimeline() {
+      const progress = getScrollProgress();
+      timelineProgress.style.height = `${progress * 100}%`;
+      let current = 'june';
+      sectionIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= window.innerHeight * 0.5) current = id;
+        }
+      });
+      timelineDots.forEach(dot => {
+        dot.classList.toggle('active', dot.dataset.section === current);
+      });
+    }
+
+    timelineDots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        const target = document.getElementById(dot.dataset.section);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    const constCanvas = document.getElementById('constellation-canvas');
+    const constCtx = constCanvas.getContext('2d');
+    let constW, constH;
+
+    function resizeConstCanvas() {
+      constW = window.innerWidth;
+      constH = window.innerHeight;
+      constCanvas.width = constW;
+      constCanvas.height = constH;
+    }
+
+    function drawConstellation() {
+      resizeConstCanvas();
+      constCtx.clearRect(0, 0, constW, constH);
+      if (stars.length === 0) return;
+      const positions = stars.map(s => {
+        const left = parseFloat(s.el.style.left);
+        const top = parseFloat(s.el.style.top);
+        return { x: (left / 100) * constW, y: (top / 100) * constH };
+      });
+      const maxDist = Math.min(constW, constH) * 0.08;
+      for (let i = 0; i < positions.length; i++) {
+        for (let j = i + 1; j < positions.length; j++) {
+          const dx = positions[i].x - positions[j].x;
+          const dy = positions[i].y - positions[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < maxDist) {
+            constCtx.beginPath();
+            constCtx.moveTo(positions[i].x, positions[i].y);
+            constCtx.lineTo(positions[j].x, positions[j].y);
+            constCtx.strokeStyle = `rgba(240, 230, 211, ${0.04 * (1 - dist / maxDist)})`;
+            constCtx.lineWidth = 0.5;
+            constCtx.stroke();
+          }
+        }
+      }
+    }
+
+    const backToTopBtn = document.getElementById('back-to-top');
+    function updateBackToTop() {
+      const juneSection = document.getElementById('june');
+      if (juneSection) {
+        const rect = juneSection.getBoundingClientRect();
+        backToTopBtn.classList.toggle('visible', rect.bottom < 0);
+      }
+    }
+    backToTopBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    function setupLineReveal() {
+      document.querySelectorAll('.section-text').forEach(block => {
+        block.querySelectorAll('p').forEach((p, i) => {
+          p.style.setProperty('--i', i);
+        });
+      });
+    }
+
+    const textObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        entry.target.classList.toggle('reveal', entry.isIntersecting);
+      });
+    }, { threshold: 0.35 });
+
+    const letter = document.getElementById('letter');
+    if (letter) {
+      letter.querySelectorAll('p').forEach((p, i) => p.style.setProperty('--i', i));
+      const letterObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          entry.target.classList.toggle('reveal', entry.isIntersecting);
+        });
+      }, { threshold: 0.3 });
+      letterObserver.observe(letter);
+    }
+
+    // Music — who.mp3 only
+    const musicBtn = document.getElementById('music-toggle');
+    const audio = new Audio('who.mp3');
+    audio.loop = true; audio.volume = 0.4; audio.load();
+    let isPlaying = true;
+
+    (function unlockAudio() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.connect(ctx.destination); src.start();
+      ctx.close();
+    })();
+
+    function toggleMusic() {
+      if (isPlaying) {
+        audio.volume = 0;
+        musicBtn.textContent = '\u{1F507}';
+        musicBtn.style.color = 'rgba(240,230,211,0.4)';
+        isPlaying = false;
+      } else {
+        audio.volume = 0.4;
+        musicBtn.textContent = '\u{1F50A}';
+        musicBtn.style.color = '#f0e6d3';
+        isPlaying = true;
+      }
+    }
+    musicBtn.addEventListener('click', toggleMusic);
+
+    const tryAutoPlay = () => {
+      audio.play().then(() => {
+        audio.volume = 0.4;
+        musicBtn.textContent = '\u{1F50A}';
+        musicBtn.style.color = '#f0e6d3';
+      }).catch(() => {
+        const kickstart = () => {
+          document.removeEventListener('click', kickstart);
+          document.removeEventListener('touchstart', kickstart);
+          audio.play().catch(() => {});
+          audio.volume = 0.4;
+        };
+        document.addEventListener('click', kickstart, { once: true });
+        document.addEventListener('touchstart', kickstart, { once: true });
+      });
+    };
+    setTimeout(tryAutoPlay, 300);
+    isPlaying = true;
+    musicBtn.textContent = '\u{1F50A}';
+    musicBtn.style.color = '#f0e6d3';
+
+    // Shooting stars
+    const ssCanvas = document.getElementById('shootingstar-canvas');
+    const ssCtx = ssCanvas.getContext('2d');
+    let ssW, ssH, shootingStars = [], ssTimer = 0;
+
+    function resizeSS() { ssW = window.innerWidth; ssH = window.innerHeight; ssCanvas.width = ssW; ssCanvas.height = ssH; }
+    resizeSS(); window.addEventListener('resize', resizeSS);
+
+    class ShootingStar {
+      constructor() {
+        this.x = Math.random() * ssW * 1.3 - ssW * 0.15;
+        this.y = Math.random() * ssH * 0.3;
+        const speed = Math.random() * 5 + 3;
+        this.vx = -speed * 0.9;
+        this.vy = -speed * 0.3 + (Math.random() - 0.5) * 0.5;
+        this.tail = Math.random() * 50 + 25;
+        this.op = 1; this.active = true; this.size = Math.random() + 0.5;
+      }
+      update() { this.x += this.vx; this.y += this.vy; this.op -= 0.006; if (this.op <= 0 || this.x < -200) this.active = false; }
+      draw(ctx) {
+        const sx = this.x + this.vx * (this.tail / Math.hypot(this.vx, this.vy));
+        const sy = this.y + this.vy * (this.tail / Math.hypot(this.vx, this.vy));
+        const g = ctx.createLinearGradient(this.x, this.y, sx, sy);
+        g.addColorStop(0, `rgba(255,250,240,${this.op})`);
+        g.addColorStop(1, 'rgba(255,250,240,0)');
+        ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(sx, sy);
+        ctx.strokeStyle = g; ctx.lineWidth = this.size; ctx.stroke();
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,250,240,${this.op * 0.6})`; ctx.fill();
+      }
+    }
+
+    function animateSS() {
+      ssCtx.clearRect(0, 0, ssW, ssH);
+      ssTimer++;
+      if (ssTimer > 150 + Math.random() * 250) { if (shootingStars.length < 4) shootingStars.push(new ShootingStar()); ssTimer = 0; }
+      shootingStars.forEach(s => { s.update(); s.draw(ssCtx); });
+      shootingStars = shootingStars.filter(s => s.active);
+      requestAnimationFrame(animateSS);
+    }
+    animateSS();
+
+    window.addEventListener('resize', () => {
+      resizeParticleCanvas();
+    });
+
+    function init() {
+      updateStars();
+      checkVisibility();
+      initParticles();
+      animateParticles();
+      setupLineReveal();
+      updateProgressBar();
+      updateNavDots();
+      drawConstellation();
+      updateTimeline();
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          entry.target.classList.toggle('visible', entry.isIntersecting);
+        });
+      }, { threshold: 0.15 });
+      sectionContents.forEach(el => observer.observe(el));
+
+      document.querySelectorAll('.section-text').forEach(el => textObserver.observe(el));
+
+      window.addEventListener('scroll', onScroll);
+      window.addEventListener('resize', drawConstellation);
+    }
+    init();
+  </script>
+</body>
+</html>

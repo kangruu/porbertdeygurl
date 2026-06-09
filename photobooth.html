@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photobooth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Lora', serif;
+      color: #f0e6d3;
+      background: #0b0b1a;
+      overflow-x: hidden;
+      line-height: 1.8;
+    }
+    ::selection { background: rgba(255, 200, 150, 0.3); }
+    #bg-gradient { position: fixed; inset: 0; z-index: -2; background: #0b0b1a; }
+    #stars-container { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+    .star {
+      position: absolute; border-radius: 50%; background: #fff;
+      animation: twinkle var(--dur) ease-in-out infinite alternate;
+      transition: opacity 0.8s ease;
+    }
+    @keyframes twinkle {
+      0% { opacity: var(--min-op, 0.3); transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1.2); }
+    }
+    #particles-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    #shootingstar-canvas { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+
+    #photobooth-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 1rem 3rem;
+    }
+
+    #booth-layout {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+    }
+    #booth-camera { text-align: center; flex: 1; min-width: 340px; max-width: 720px; }
+    #booth-divider {
+      width: 1px;
+      height: 500px;
+      background: linear-gradient(to bottom, transparent, rgba(240,230,211,0.15), transparent);
+      flex-shrink: 0;
+    }
+    #strip-section { flex-shrink: 0; }
+    #booth-viewfinder {
+      position: relative;
+      background: #000;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 720px;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid rgba(240,230,211,0.08);
+    }
+    #booth-video {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: none;
+      transform: scaleX(-1);
+    }
+    #booth-video.active { display: block; }
+    #booth-countdown {
+      position: absolute;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 5rem;
+      color: rgba(255,245,235,0.6);
+      z-index: 2;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+    #booth-countdown.show { opacity: 1; }
+    #booth-flash {
+      position: absolute; inset: 0;
+      background: #fff;
+      z-index: 3;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.05s ease;
+    }
+    #booth-flash.active { opacity: 0.85; }
+    #take-photo-btn { margin-top: 0.8rem; }
+
+    #strip-container {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    #strip-overlays {
+      position: absolute; inset: 0;
+      pointer-events: none;
+    }
+    .strip-slot {
+      position: absolute;
+      cursor: pointer;
+      pointer-events: auto;
+      border-radius: 2px;
+      transition: background 0.2s ease;
+    }
+    .strip-slot:hover { background: rgba(240,230,211,0.06); }
+    .strip-slot.highlight { background: rgba(240,230,211,0.1); }
+    #strip-container canvas { display: block; border-radius: 2px; width: 100%; height: auto; }
+    #booth-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.8rem;
+      margin-top: 0.6rem;
+    }
+
+    .btn {
+      display: inline-block;
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: 0.8rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #f0e6d3;
+      background: transparent;
+      border: 1px solid rgba(240, 230, 211, 0.3);
+      padding: 0.7rem 1.8rem;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: rgba(240, 230, 211, 0.1);
+      border-color: rgba(240, 230, 211, 0.6);
+    }
+    .booth-btn {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+      border-color: rgba(240,230,211,0.2) !important;
+      color: rgba(240,230,211,0.5) !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .booth-btn svg { flex-shrink: 0; }
+    .booth-btn:hover {
+      border-color: rgba(240,230,211,0.4) !important;
+      color: rgba(240,230,211,0.8) !important;
+    }
+
+    #back-link {
+      position: fixed;
+      top: 1.5rem; left: 1.5rem;
+      z-index: 50;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(240, 230, 211, 0.3);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border: 1px solid rgba(240, 230, 211, 0.15);
+      border-radius: 20px;
+      transition: all 0.3s ease;
+    }
+    #back-link:hover {
+      color: rgba(240, 230, 211, 0.6);
+      border-color: rgba(240, 230, 211, 0.3);
+    }
+
+    #music-toggle {
+      position: fixed;
+      bottom: 2rem; right: 2rem;
+      z-index: 50;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(240, 230, 211, 0.3);
+      background: rgba(11, 11, 26, 0.6);
+      backdrop-filter: blur(8px);
+      color: #f0e6d3;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+    #music-toggle:hover {
+      border-color: rgba(240, 230, 211, 0.6);
+      background: rgba(11, 11, 26, 0.8);
+    }
+
+    #loading {
+      position: fixed; inset: 0; z-index: 200;
+      background: #0b0b1a;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 1.5s ease;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    #loading span {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.2rem;
+      color: rgba(240, 230, 211, 0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .no-camera-msg {
+      color: rgba(240,230,211,0.3);
+      font-size: 0.7rem;
+      font-family: Inter, sans-serif;
+      letter-spacing: 1px;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      #music-toggle { bottom: 1.2rem; right: 1.2rem; width: 40px; height: 40px; font-size: 1rem; }
+      #back-link { top: 1rem; left: 1rem; font-size: 0.6rem; padding: 0.4rem 0.8rem; }
+      #take-photo-btn { font-size: 0.7rem; padding: 0.5rem 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading">
+    <span>&#10022; Photobooth &#10022;</span>
+  </div>
+
+  <div id="bg-gradient"></div>
+  <div id="stars-container"></div>
+  <canvas id="particles-canvas"></canvas>
+  <canvas id="shootingstar-canvas"></canvas>
+
+  <a id="back-link" href="index.html">&#8592; Back</a>
+  <button id="music-toggle" aria-label="Toggle music">&#9835;</button>
+
+  <section id="photobooth-page">
+    <div id="booth-layout">
+      <div id="booth-camera">
+        <div id="booth-viewfinder">
+          <video id="booth-video" autoplay playsinline muted disablePictureInPicture></video>
+          <div id="booth-countdown"></div>
+          <div id="booth-flash"></div>
+        </div>
+        <button id="take-photo-btn" class="btn">Capture 1/6</button>
+      </div>
+      <div id="booth-divider"></div>
+      <div id="strip-section">
+        <div id="strip-container">
+          <canvas id="strip-canvas" width="460" height="690"></canvas>
+          <div id="strip-overlays"></div>
+        </div>
+        <div id="booth-actions">
+          <button id="save-strip-btn" class="btn booth-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+            Save
+          </button>
+          <button id="retake-btn" class="btn booth-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            Again
+          </button>
+        </div>
+      </div>
+  </section>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+        setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 1500);
+      }, 800);
+    });
+
+    // Stars
+    const starsContainer = document.getElementById('stars-container');
+    const STAR_COUNT = 150;
+    const stars = [];
+    const starColors = ['#fff', '#fde8d0', '#d0e4fd', '#fdd0e0', '#fffde0', '#e0fde8'];
+    for (let i = 0; i < STAR_COUNT; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      const size = Math.random() * 2.5 + 0.5;
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
+      const minOp = Math.random() * 0.3 + 0.1;
+      const dur = Math.random() * 3 + 2;
+      const color = starColors[Math.floor(Math.random() * starColors.length)];
+      const glow = size > 2 ? 'box-shadow: 0 0 ' + (size * 2) + 'px ' + color + ';' : '';
+      star.style.cssText = 'width:' + size + 'px;height:' + size + 'px;left:' + x + '%;top:' + y + '%;--min-op:' + minOp + ';--dur:' + dur + 's;opacity:' + minOp + ';background:' + color + ';' + glow;
+      starsContainer.appendChild(star);
+      stars.push({ el: star, baseY: y, baseOpacity: minOp + 0.3 });
+    }
+
+    // Particles
+    const pCanvas = document.getElementById('particles-canvas');
+    const pCtx = pCanvas.getContext('2d');
+    let particleWidth, particleHeight;
+    const particleArr = [];
+    const PARTICLE_COUNT = 40;
+
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * particleWidth;
+        this.y = Math.random() * particleHeight;
+        this.size = Math.random() * 2.5 + 0.5;
+        this.speedY = -(Math.random() * 0.3 + 0.1);
+        this.speedX = (Math.random() - 0.5) * 0.1;
+        this.opacity = Math.random() * 0.4 + 0.1;
+        this.life = Math.random() * 200 + 100;
+      }
+      update() {
+        this.y += this.speedY; this.x += this.speedX; this.life--;
+        if (this.y < -10 || this.life <= 0) { this.reset(); this.y = particleHeight + 5; }
+      }
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 230, 210, ' + this.opacity + ')';
+        ctx.fill();
+      }
+    }
+
+    function resizeParticleCanvas() {
+      particleWidth = window.innerWidth;
+      particleHeight = window.innerHeight;
+      pCanvas.width = particleWidth; pCanvas.height = particleHeight;
+    }
+
+    function initParticles() {
+      resizeParticleCanvas();
+      particleArr.length = 0;
+      for (let i = 0; i < PARTICLE_COUNT; i++) particleArr.push(new Particle());
+    }
+
+    function animateParticles() {
+      pCtx.clearRect(0, 0, particleWidth, particleHeight);
+      particleArr.forEach(function(p) { p.update(); p.draw(pCtx); });
+      requestAnimationFrame(animateParticles);
+    }
+
+    // Shooting stars
+    const ssCanvas = document.getElementById('shootingstar-canvas');
+    const ssCtx = ssCanvas.getContext('2d');
+    let ssW, ssH, shootingStars = [], ssTimer = 0;
+    function resizeSS() { ssW = window.innerWidth; ssH = window.innerHeight; ssCanvas.width = ssW; ssCanvas.height = ssH; }
+    resizeSS(); window.addEventListener('resize', resizeSS);
+
+    class ShootingStar {
+      constructor() {
+        this.x = Math.random() * ssW * 1.3 - ssW * 0.15;
+        this.y = Math.random() * ssH * 0.3;
+        var speed = Math.random() * 5 + 3;
+        this.vx = -speed * 0.9;
+        this.vy = -speed * 0.3 + (Math.random() - 0.5) * 0.5;
+        this.tail = Math.random() * 50 + 25;
+        this.op = 1; this.active = true; this.size = Math.random() + 0.5;
+      }
+      update() { this.x += this.vx; this.y += this.vy; this.op -= 0.006; if (this.op <= 0 || this.x < -200) this.active = false; }
+      draw(ctx) {
+        var sx = this.x + this.vx * (this.tail / Math.hypot(this.vx, this.vy));
+        var sy = this.y + this.vy * (this.tail / Math.hypot(this.vx, this.vy));
+        var g = ctx.createLinearGradient(this.x, this.y, sx, sy);
+        g.addColorStop(0, 'rgba(255,250,240,' + this.op + ')');
+        g.addColorStop(1, 'rgba(255,250,240,0)');
+        ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(sx, sy);
+        ctx.strokeStyle = g; ctx.lineWidth = this.size; ctx.stroke();
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,250,240,' + (this.op * 0.6) + ')'; ctx.fill();
+      }
+    }
+    function animateSS() {
+      ssCtx.clearRect(0, 0, ssW, ssH);
+      ssTimer++;
+      if (ssTimer > 150 + Math.random() * 250) { if (shootingStars.length < 4) shootingStars.push(new ShootingStar()); ssTimer = 0; }
+      shootingStars.forEach(function(s) { s.update(); s.draw(ssCtx); });
+      shootingStars = shootingStars.filter(function(s) { return s.active; });
+      requestAnimationFrame(animateSS);
+    }
+    animateSS();
+
+    // Music — lany.mp3
+    const musicBtn = document.getElementById('music-toggle');
+    const audio = new Audio('lany.mp3');
+    audio.loop = true; audio.volume = 0.4; audio.load();
+    let isPlaying = true;
+
+    (function unlockAudio() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.connect(ctx.destination); src.start();
+      ctx.close();
+    })();
+
+    function toggleMusic() {
+      if (isPlaying) {
+        audio.volume = 0;
+        musicBtn.textContent = '\u{1F507}';
+        musicBtn.style.color = 'rgba(240,230,211,0.4)';
+        isPlaying = false;
+      } else {
+        audio.volume = 0.4;
+        musicBtn.textContent = '\u{1F50A}';
+        musicBtn.style.color = '#f0e6d3';
+        isPlaying = true;
+      }
+    }
+    musicBtn.addEventListener('click', toggleMusic);
+
+    const tryAutoPlay = () => {
+      audio.play().then(() => {
+        audio.volume = 0.4;
+        musicBtn.textContent = '\u{1F50A}';
+        musicBtn.style.color = '#f0e6d3';
+      }).catch(() => {
+        const kickstart = () => {
+          document.removeEventListener('click', kickstart);
+          document.removeEventListener('touchstart', kickstart);
+          audio.play().catch(() => {});
+          audio.volume = 0.4;
+        };
+        document.addEventListener('click', kickstart, { once: true });
+        document.addEventListener('touchstart', kickstart, { once: true });
+      });
+    };
+    setTimeout(tryAutoPlay, 300);
+    isPlaying = true;
+    musicBtn.textContent = '\u{1F50A}';
+    musicBtn.style.color = '#f0e6d3';
+
+    // Chime
+    let chimeCtx = null;
+    function playChime() {
+      if (!chimeCtx) chimeCtx = new (window.AudioContext || window.webkitAudioContext)();
+      chimeCtx.resume();
+      const now = chimeCtx.currentTime;
+      [523.25, 659.25, 783.99].forEach((freq, i) => {
+        const osc = chimeCtx.createOscillator();
+        const gain = chimeCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, now + i * 0.12);
+        gain.gain.linearRampToValueAtTime(0.04, now + i * 0.12 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.8);
+        osc.connect(gain);
+        gain.connect(chimeCtx.destination);
+        osc.start(now + i * 0.12);
+        osc.stop(now + i * 0.12 + 0.8);
+      });
+    }
+
+    // Photobooth
+    const TPL_W = 1333, TPL_H = 2000;
+    const DISP_W = 460, DISP_H = 690;
+    let mediaStream = null;
+    let capturedFrames = [];
+    let stripTemplate = null;
+    let captureCount = 0;
+    let retakeIndex = -1;
+
+    async function loadStripTemplate() {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => { stripTemplate = img; drawPhotostrip(capturedFrames); resolve(); };
+        img.onerror = () => {
+          const img2 = new Image();
+          img2.onload = () => { stripTemplate = img2; drawPhotostrip(capturedFrames); resolve(); };
+          img2.onerror = () => resolve();
+          img2.src = 'strip-template.png';
+        };
+        img.src = 'strip-template.jpg';
+      });
+    }
+
+    async function startCamera() {
+      const video = document.getElementById('booth-video');
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+        });
+        video.srcObject = mediaStream;
+        video.classList.add('active');
+      } catch (e) {
+        document.getElementById('booth-viewfinder').innerHTML +=
+          '<div class="no-camera-msg">camera not available</div>';
+      }
+    }
+
+    function stopCamera() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+      }
+      document.getElementById('booth-video').classList.remove('active');
+    }
+
+    function captureFrame() {
+      const video = document.getElementById('booth-video');
+      if (!video.videoWidth) return null;
+      const w = video.videoWidth, h = video.videoHeight;
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const cx = c.getContext('2d');
+      cx.translate(w, 0);
+      cx.scale(-1, 1);
+      cx.drawImage(video, 0, 0, w, h);
+      return c;
+    }
+
+    const PHOTO_PCT = [
+      { top: 24, left: 14.5 },
+      { top: 24, left: 51.5 },
+      { top: 47.2, left: 14.5 },
+      { top: 47.2, left: 51.5 },
+      { top: 70.6, left: 14.5 },
+      { top: 70.6, left: 51.5 },
+    ];
+    const PW_PCT = 34, PH_PCT = 20.5;
+
+    function drawPhotostrip(frames) {
+      const canvas = document.getElementById('strip-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.clearRect(0, 0, DISP_W, DISP_H);
+      if (stripTemplate) {
+        ctx.drawImage(stripTemplate, 0, 0, DISP_W, DISP_H);
+      } else {
+        ctx.fillStyle = '#f5efe6';
+        ctx.fillRect(0, 0, DISP_W, DISP_H);
+        ctx.fillStyle = '#999';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('template not loaded', DISP_W/2, DISP_H/2);
+      }
+      const pw = DISP_W * PW_PCT / 100;
+      const ph = DISP_H * PH_PCT / 100;
+      for (let i = 0; i < 6; i++) {
+        const x = DISP_W * PHOTO_PCT[i].left / 100;
+        const y = DISP_H * PHOTO_PCT[i].top / 100;
+        if (frames && i < frames.length && frames[i]) {
+          const sw = frames[i].width, sh = frames[i].height;
+          const destRatio = pw / ph;
+          const srcRatio = sw / sh;
+          let sx, sy, sWidth, sHeight;
+          if (srcRatio > destRatio) {
+            sHeight = sh;
+            sWidth = sh * destRatio;
+            sx = (sw - sWidth) / 2;
+            sy = 0;
+          } else {
+            sWidth = sw;
+            sHeight = sw / destRatio;
+            sx = 0;
+            sy = (sh - sHeight) / 2;
+          }
+          ctx.drawImage(frames[i], sx, sy, sWidth, sHeight, x, y, pw, ph);
+        } else {
+          ctx.fillStyle = 'rgba(0,0,0,0.08)';
+          ctx.fillRect(x, y, pw, ph);
+        }
+      }
+    }
+
+    function renderFullRes() {
+      const c = document.createElement('canvas');
+      c.width = TPL_W; c.height = TPL_H;
+      const cx = c.getContext('2d');
+      if (stripTemplate) cx.drawImage(stripTemplate, 0, 0, TPL_W, TPL_H);
+      const pw = TPL_W * PW_PCT / 100;
+      const ph = TPL_H * PH_PCT / 100;
+      for (let i = 0; i < 6; i++) {
+        const x = TPL_W * PHOTO_PCT[i].left / 100;
+        const y = TPL_H * PHOTO_PCT[i].top / 100;
+        if (i < capturedFrames.length && capturedFrames[i]) {
+          const sw = capturedFrames[i].width, sh = capturedFrames[i].height;
+          const destRatio = pw / ph;
+          const srcRatio = sw / sh;
+          let sx, sy, sWidth, sHeight;
+          if (srcRatio > destRatio) {
+            sHeight = sh;
+            sWidth = sh * destRatio;
+            sx = (sw - sWidth) / 2;
+            sy = 0;
+          } else {
+            sWidth = sw;
+            sHeight = sw / destRatio;
+            sx = 0;
+            sy = (sh - sHeight) / 2;
+          }
+          cx.drawImage(capturedFrames[i], sx, sy, sWidth, sHeight, x, y, pw, ph);
+        }
+      }
+      return c;
+    }
+
+    function createStripOverlays() {
+      const container = document.getElementById('strip-overlays');
+      container.innerHTML = '';
+      for (let i = 0; i < 6; i++) {
+        const div = document.createElement('div');
+        div.className = 'strip-slot';
+        const pw = 460 * PW_PCT / 100, ph = 690 * PH_PCT / 100;
+        const x = 460 * PHOTO_PCT[i].left / 100;
+        const y = 690 * PHOTO_PCT[i].top / 100;
+        div.style.left = x + 'px'; div.style.top = y + 'px';
+        div.style.width = pw + 'px'; div.style.height = ph + 'px';
+        div.dataset.idx = i;
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = parseInt(e.currentTarget.dataset.idx);
+          if (capturedFrames.length <= idx && !capturedFrames[idx]) return;
+          retakeIndex = idx;
+          document.querySelectorAll('.strip-slot').forEach(s => s.classList.remove('highlight'));
+          e.currentTarget.classList.add('highlight');
+          const btn = document.getElementById('take-photo-btn');
+          btn.textContent = 'Retake ' + (idx + 1);
+          btn.style.display = 'inline-block';
+        });
+        container.appendChild(div);
+      }
+    }
+
+    function singleCapture(cb) {
+      const countdown = document.getElementById('booth-countdown');
+      const flash = document.getElementById('booth-flash');
+      countdown.textContent = '';
+      flash.classList.remove('active');
+      let sec = 3;
+      countdown.classList.add('show');
+      countdown.textContent = sec;
+      countdown.style.transform = 'scale(1)';
+      const interval = setInterval(() => {
+        sec--;
+        if (sec > 0) {
+          countdown.style.transform = 'scale(1.3)';
+          countdown.textContent = sec;
+          setTimeout(() => { countdown.style.transform = 'scale(1)'; }, 150);
+        } else { clearInterval(interval); }
+      }, 1000);
+      setTimeout(() => {
+        countdown.classList.remove('show');
+        flash.classList.add('active');
+        setTimeout(() => {
+          flash.classList.remove('active');
+          const frame = captureFrame();
+          cb(frame);
+        }, 200);
+      }, 3300);
+    }
+
+    function onCaptureTap() {
+      const takeBtn = document.getElementById('take-photo-btn');
+      takeBtn.style.display = 'none';
+      playChime();
+      singleCapture((frame) => {
+        if (!frame) { takeBtn.style.display = 'inline-block'; return; }
+        if (retakeIndex >= 0) {
+          capturedFrames[retakeIndex] = frame;
+          retakeIndex = -1;
+          document.querySelectorAll('.strip-slot').forEach(s => s.classList.remove('highlight'));
+        } else {
+          capturedFrames.push(frame);
+          captureCount++;
+        }
+        drawPhotostrip(capturedFrames);
+        if (captureCount >= 6) {
+          takeBtn.textContent = 'Again';
+          takeBtn.style.display = 'inline-block';
+          document.querySelectorAll('.strip-slot').forEach(s => s.classList.remove('highlight'));
+          playChime();
+        } else {
+          const next = retakeIndex >= 0 ? 'Retake ' + (retakeIndex + 1) : 'Capture ' + (captureCount + 1) + '/6';
+          takeBtn.textContent = next;
+          takeBtn.style.display = 'inline-block';
+        }
+      });
+    }
+
+    function resetPhotobooth() {
+      captureCount = 0;
+      capturedFrames = [];
+      retakeIndex = -1;
+      document.getElementById('booth-countdown').classList.remove('show');
+      document.getElementById('booth-flash').classList.remove('active');
+      const takeBtn = document.getElementById('take-photo-btn');
+      takeBtn.style.display = 'inline-block';
+      takeBtn.textContent = 'Capture 1/6';
+      document.querySelectorAll('.strip-slot').forEach(s => s.classList.remove('highlight'));
+      drawPhotostrip([]);
+    }
+
+    document.getElementById('take-photo-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (captureCount >= 6 && retakeIndex < 0) { resetPhotobooth(); }
+      else { onCaptureTap(); }
+    });
+    document.getElementById('retake-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetPhotobooth();
+    });
+    document.getElementById('save-strip-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const full = renderFullRes();
+      const link = document.createElement('a');
+      link.download = 'photostrip.png';
+      link.href = full.toDataURL('image/png');
+      link.click();
+    });
+
+    // Init
+    function init() {
+      initParticles();
+      animateParticles();
+      drawPhotostrip([]);
+      createStripOverlays();
+      loadStripTemplate();
+      startCamera();
+      window.addEventListener('resize', resizeParticleCanvas);
+    }
+    init();
+  </script>
+</body>
+</html>
