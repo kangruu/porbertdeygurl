@@ -780,9 +780,7 @@
 
   <!-- Loading Screen -->
   <div id="loading">
-    <span>hello ayana</span>
-    <span style="display:block;margin-top:0.3rem;font-size:0.85rem;font-family:'Inter',sans-serif;font-style:normal;font-weight:300;opacity:0.5;">happiest birthday</span>
-    <span style="display:block;margin-top:1.2rem;font-size:0.7rem;font-family:'Inter',sans-serif;font-style:normal;font-weight:300;opacity:0.25;letter-spacing:2px;text-transform:uppercase;">i made this for you — tap to begin</span>
+    <span>hello ayana happiest birthday i made this for you so i hope you like it :P</span>
   </div>
 
   <!-- Progress Bar -->
@@ -859,20 +857,20 @@
 
   <script>
     // =====================================================
-    // 1. LOADING SCREEN — tap to enter + start music
+    // 1. LOADING SCREEN — auto dismiss, remember with sessionStorage
     // =====================================================
     const loadingEl = document.getElementById('loading');
-    function dismissLoading() {
-      if (loadingEl.classList.contains('hidden')) return;
-      loadingEl.classList.add('hidden');
-      setTimeout(() => { loadingEl.style.display = 'none'; }, 1500);
-      document.removeEventListener('click', dismissLoading);
-      document.removeEventListener('touchstart', dismissLoading);
+    if (sessionStorage.getItem('loadingSeen')) {
+      loadingEl.style.display = 'none';
+    } else {
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          loadingEl.classList.add('hidden');
+          setTimeout(() => { loadingEl.style.display = 'none'; }, 1500);
+        }, 1200);
+      });
+      sessionStorage.setItem('loadingSeen', 'true');
     }
-    loadingEl.addEventListener('click', dismissLoading);
-    loadingEl.addEventListener('touchstart', dismissLoading);
-    // Auto-dismiss fallback after 8s
-    setTimeout(dismissLoading, 8000);
 
     // =====================================================
     // 2. STARS GENERATION

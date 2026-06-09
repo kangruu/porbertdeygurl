@@ -287,12 +287,19 @@
   </section>
 
   <script>
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        document.getElementById('loading').classList.add('hidden');
-        setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 1500);
-      }, 800);
-    });
+    // Loading screen with sessionStorage
+    const loadingEl = document.getElementById('loading');
+    if (sessionStorage.getItem('loadingSeen')) {
+      loadingEl.style.display = 'none';
+    } else {
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          loadingEl.classList.add('hidden');
+          setTimeout(() => { loadingEl.style.display = 'none'; }, 1500);
+        }, 800);
+      });
+      sessionStorage.setItem('loadingSeen', 'true');
+    }
 
     // Stars
     const starsContainer = document.getElementById('stars-container');
