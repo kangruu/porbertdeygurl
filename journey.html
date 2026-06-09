@@ -855,19 +855,23 @@
       letterObserver.observe(letter);
     }
 
-    // Music — who.mp3 only
+    // Music — who.mp3 with improved autoplay
     const musicBtn = document.getElementById('music-toggle');
     const audio = new Audio('who.mp3');
     audio.loop = true; audio.volume = 0.4; audio.load();
     let isPlaying = true;
+    let audioCtx = null;
 
-    (function unlockAudio() {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const buf = ctx.createBuffer(1, 1, 22050);
-      const src = ctx.createBufferSource();
-      src.buffer = buf; src.connect(ctx.destination); src.start();
-      ctx.close();
-    })();
+    function ensureAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function doPlay() {
+      ensureAudioCtx();
+      audio.play().catch(() => {});
+      audio.volume = 0.4;
+    }
 
     function toggleMusic() {
       if (isPlaying) {
@@ -879,29 +883,23 @@
         audio.volume = 0.4;
         musicBtn.textContent = '\u{1F50A}';
         musicBtn.style.color = '#f0e6d3';
+        doPlay();
         isPlaying = true;
       }
     }
     musicBtn.addEventListener('click', toggleMusic);
 
-    const tryAutoPlay = () => {
-      audio.play().then(() => {
-        audio.volume = 0.4;
-        musicBtn.textContent = '\u{1F50A}';
-        musicBtn.style.color = '#f0e6d3';
-      }).catch(() => {
-        const kickstart = () => {
-          document.removeEventListener('click', kickstart);
-          document.removeEventListener('touchstart', kickstart);
-          audio.play().catch(() => {});
-          audio.volume = 0.4;
-        };
-        document.addEventListener('click', kickstart, { once: true });
-        document.addEventListener('touchstart', kickstart, { once: true });
-      });
+    // Try autoplay after a short delay
+    setTimeout(doPlay, 100);
+
+    // Fallback: first user interaction starts audio
+    const firstTap = () => {
+      doPlay();
+      document.removeEventListener('click', firstTap);
+      document.removeEventListener('touchstart', firstTap);
     };
-    setTimeout(tryAutoPlay, 300);
-    isPlaying = true;
+    document.addEventListener('click', firstTap);
+    document.addEventListener('touchstart', firstTap);
     musicBtn.textContent = '\u{1F50A}';
     musicBtn.style.color = '#f0e6d3';
 
