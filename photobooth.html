@@ -633,11 +633,10 @@
       for (let i = 0; i < 6; i++) {
         const div = document.createElement('div');
         div.className = 'strip-slot';
-        const pw = 460 * PW_PCT / 100, ph = 690 * PH_PCT / 100;
-        const x = 460 * PHOTO_PCT[i].left / 100;
-        const y = 690 * PHOTO_PCT[i].top / 100;
-        div.style.left = x + 'px'; div.style.top = y + 'px';
-        div.style.width = pw + 'px'; div.style.height = ph + 'px';
+        div.style.left = PHOTO_PCT[i].left + '%';
+        div.style.top = PHOTO_PCT[i].top + '%';
+        div.style.width = PW_PCT + '%';
+        div.style.height = PH_PCT + '%';
         div.dataset.idx = i;
         div.addEventListener('click', (e) => {
           e.stopPropagation();
