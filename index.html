@@ -779,7 +779,8 @@
 
   <!-- Loading Screen -->
   <div id="loading">
-    <span>&#10022; February to June &#10022;</span>
+    <span>hello ayana</span>
+    <span style="display:block;margin-top:0.5rem;font-size:0.85rem;font-family:'Inter',sans-serif;font-style:normal;font-weight:300;opacity:0.5;">i made this for you so i hope you like it :P</span>
   </div>
 
   <!-- Progress Bar -->
@@ -1099,6 +1100,12 @@
       audio.volume = 0.4;
     }
 
+    // Try autoplay immediately and repeatedly
+    doPlay();
+    setTimeout(doPlay, 200);
+    setTimeout(doPlay, 600);
+    window.addEventListener('load', doPlay);
+
     function toggleMusic() {
       if (isPlaying) {
         audio.volume = 0;
@@ -1114,9 +1121,6 @@
       }
     }
     musicBtn.addEventListener('click', toggleMusic);
-
-    // Try autoplay after a short delay
-    setTimeout(doPlay, 100);
 
     // Fallback: first user interaction starts audio
     const firstTap = () => {

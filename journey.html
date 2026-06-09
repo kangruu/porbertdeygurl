@@ -361,7 +361,7 @@
 <body>
 
   <div id="loading">
-    <span>&#10022; February to June &#10022;</span>
+    <span>February to June</span>
   </div>
 
   <div id="progress-bar"></div>
@@ -855,7 +855,7 @@
       letterObserver.observe(letter);
     }
 
-    // Music — who.mp3 with improved autoplay
+    // Music — who.mp3 with autoplay
     const musicBtn = document.getElementById('music-toggle');
     const audio = new Audio('who.mp3');
     audio.loop = true; audio.volume = 0.4; audio.load();
@@ -873,6 +873,12 @@
       audio.volume = 0.4;
     }
 
+    // Try autoplay immediately and repeatedly
+    doPlay();
+    setTimeout(doPlay, 200);
+    setTimeout(doPlay, 600);
+    window.addEventListener('load', doPlay);
+
     function toggleMusic() {
       if (isPlaying) {
         audio.volume = 0;
@@ -888,9 +894,6 @@
       }
     }
     musicBtn.addEventListener('click', toggleMusic);
-
-    // Try autoplay after a short delay
-    setTimeout(doPlay, 100);
 
     // Fallback: first user interaction starts audio
     const firstTap = () => {
