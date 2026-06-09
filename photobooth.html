@@ -450,6 +450,17 @@
     musicBtn.textContent = '\u{1F50A}';
     musicBtn.style.color = '#f0e6d3';
 
+    // Save playback position when navigating away
+    window.addEventListener('beforeunload', () => {
+      sessionStorage.setItem('lanyTime', audio.currentTime);
+    });
+    // Restore playback position if coming from index/journey
+    const savedTime = sessionStorage.getItem('lanyTime');
+    if (savedTime) {
+      audio.currentTime = parseFloat(savedTime);
+      sessionStorage.removeItem('lanyTime');
+    }
+
     // Chime
     let chimeCtx = null;
     function playChime() {
