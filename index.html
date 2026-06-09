@@ -381,6 +381,7 @@
       justify-content: center;
       align-items: center;
       transition: opacity 1.5s ease;
+      cursor: pointer;
     }
     #loading.hidden {
       opacity: 0;
@@ -780,7 +781,8 @@
   <!-- Loading Screen -->
   <div id="loading">
     <span>hello ayana</span>
-    <span style="display:block;margin-top:0.5rem;font-size:0.85rem;font-family:'Inter',sans-serif;font-style:normal;font-weight:300;opacity:0.5;">i made this for you so i hope you like it :P</span>
+    <span style="display:block;margin-top:0.3rem;font-size:0.85rem;font-family:'Inter',sans-serif;font-style:normal;font-weight:300;opacity:0.5;">happiest birthday</span>
+    <span style="display:block;margin-top:1.2rem;font-size:0.7rem;font-family:'Inter',sans-serif;font-style:normal;font-weight:300;opacity:0.25;letter-spacing:2px;text-transform:uppercase;">i made this for you — tap to begin</span>
   </div>
 
   <!-- Progress Bar -->
@@ -857,16 +859,20 @@
 
   <script>
     // =====================================================
-    // 1. LOADING SCREEN
+    // 1. LOADING SCREEN — tap to enter + start music
     // =====================================================
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        document.getElementById('loading').classList.add('hidden');
-        setTimeout(() => {
-          document.getElementById('loading').style.display = 'none';
-        }, 1500);
-      }, 1200);
-    });
+    const loadingEl = document.getElementById('loading');
+    function dismissLoading() {
+      if (loadingEl.classList.contains('hidden')) return;
+      loadingEl.classList.add('hidden');
+      setTimeout(() => { loadingEl.style.display = 'none'; }, 1500);
+      document.removeEventListener('click', dismissLoading);
+      document.removeEventListener('touchstart', dismissLoading);
+    }
+    loadingEl.addEventListener('click', dismissLoading);
+    loadingEl.addEventListener('touchstart', dismissLoading);
+    // Auto-dismiss fallback after 8s
+    setTimeout(dismissLoading, 8000);
 
     // =====================================================
     // 2. STARS GENERATION
