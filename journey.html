@@ -514,6 +514,36 @@
     </div>
   </section>
 
+  <section id="afterwards">
+    <div class="section-content">
+      <h2>Afterwards</h2>
+      <div class="story-text">
+        <p>I didn't know about it at first.</p>
+        <p>The video you made.<br>The portrait of me.<br>And the LEGO you bought.</p>
+        <p>I only found out later… and it honestly made me pause for a moment and just smile.</p>
+        <p>Because it felt like discovering little pieces of you I didn't get to see while everything was still happening between us.</p>
+        <p>You were creating things with me in them, quietly, naturally… like I was still part of your thoughts in those moments.</p>
+        <p>And somehow, that stayed with me in a soft way.</p>
+        <p>The portrait especially… I keep going back to it in my mind.</p>
+        <p>There's something about knowing someone actually sat down and chose to draw you. Not just see you, but spend time turning that into something real. It feels gentle in a way I can't really explain.</p>
+        <p>And the LEGO… that one made me happy.</p>
+        <p>It's such a simple thing, but it felt personal. Like you saw something small in me and thought, "this is something he'd like," and decided to give it. That kind of thoughtfulness is rare in a way that makes you quietly appreciate it more when you realize it.</p>
+        <p>And there's another video too… the birthday video you made for me.</p>
+        <p>Whenever I miss you, I somehow find myself going back to that video.</p>
+        <p>It gives me this warm feeling I can't really put into words… like I'm closer to you for a moment, even if it's just through a screen.</p>
+        <p>I really do miss you. A lot more than I probably ever say directly.</p>
+        <p>I think what made me smile the most is realizing I was still in your world in those moments, and I was fully aware of it.</p>
+        <p>Still being thought of.<br>Still being remembered in small, creative ways.</p>
+        <p>It makes everything feel a little warmer when I think about it now.</p>
+        <p>So I just want to say thank you.</p>
+        <p>For the portrait you made.<br>For the LEGO you chose.<br>For the birthday video you made for me.<br>For the way you kept me in your thoughts in your own quiet, beautiful way.</p>
+        <p>It makes me happy to know that there were moments like that between us that I only got to discover later, but still get to feel now.</p>
+        <p>And maybe that's my favorite part about it—</p>
+        <p>that even after everything, I can still find something that makes me smile when I think of you.</p>
+      </div>
+    </div>
+  </section>
+
   <section id="epilogue">
     <div class="letter-container">
       <div class="letter" id="letter">
@@ -531,11 +561,12 @@
   <div id="timeline">
     <div id="timeline-line">
       <div id="timeline-progress"></div>
-      <div class="timeline-dot" data-section="february" style="top:10%"><span>Feb</span></div>
-      <div class="timeline-dot" data-section="march" style="top:28%"><span>Mar</span></div>
-      <div class="timeline-dot" data-section="april" style="top:46%"><span>Apr</span></div>
-      <div class="timeline-dot" data-section="may" style="top:64%"><span>May</span></div>
-      <div class="timeline-dot" data-section="june" style="top:82%"><span>Jun</span></div>
+      <div class="timeline-dot" data-section="february" style="top:8%"><span>Feb</span></div>
+      <div class="timeline-dot" data-section="march" style="top:24%"><span>Mar</span></div>
+      <div class="timeline-dot" data-section="april" style="top:40%"><span>Apr</span></div>
+      <div class="timeline-dot" data-section="may" style="top:56%"><span>May</span></div>
+      <div class="timeline-dot" data-section="june" style="top:72%"><span>Jun</span></div>
+      <div class="timeline-dot" data-section="afterwards" style="top:88%"><span>After</span></div>
     </div>
   </div>
 
@@ -547,6 +578,7 @@
     <div class="nav-dot" data-section="april"></div>
     <div class="nav-dot" data-section="may"></div>
     <div class="nav-dot" data-section="june"></div>
+    <div class="nav-dot" data-section="afterwards"></div>
   </nav>
 
   <button id="back-to-top" aria-label="Back to top">&#8593;</button>
@@ -697,7 +729,7 @@
     }
 
     const navDots = document.querySelectorAll('.nav-dot');
-    const sectionIds = ['february', 'march', 'april', 'may', 'june'];
+    const sectionIds = ['february', 'march', 'april', 'may', 'june', 'afterwards'];
 
     function updateNavDots() {
       let current = 'june';
